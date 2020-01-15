@@ -178,9 +178,8 @@ class DayColumn extends React.Component {
     )
   }
 
-  renderEvents = ({ events, isBackgroundEvent }) => {
+  renderEvents = ({ isBackgroundEvent, events }) => {
     let {
-      events,
       rtl,
       selected,
       accessors,
@@ -226,7 +225,7 @@ class DayColumn extends React.Component {
         label: label,
         key: 'evt_' + idx,
         getters: getters,
-        isRtl: isRtl,
+        rtl: rtl,
         components: components,
         continuesEarlier: continuesEarlier,
         continuesLater: continuesLater,
@@ -237,41 +236,9 @@ class DayColumn extends React.Component {
       }
 
       if (isBackgroundEvent) {
-        return (
-          <TimeGridBackgroundEvent 
-            style={style}
-            event={event}
-            label={label}
-            key={'evt_' + idx}
-            getters={getters}
-            rtl={rtl}
-            components={components}
-            continuesEarlier={continuesEarlier}
-            continuesLater={continuesLater}
-            accessors={accessors}
-            selected={isSelected(event, selected)}
-            onClick={e => this._select(event, e)}
-            onDoubleClick={e => this._doubleClick(event, e)} 
-          />
-        )
-      } 
-      return (
-        <TimeGridEvent
-          style={style}
-          event={event}
-          label={label}
-          key={'evt_' + idx}
-          getters={getters}
-          rtl={rtl}
-          components={components}
-          continuesEarlier={continuesEarlier}
-          continuesLater={continuesLater}
-          accessors={accessors}
-          selected={isSelected(event, selected)}
-          onClick={e => this._select(event, e)}
-          onDoubleClick={e => this._doubleClick(event, e)}
-        />
-      )
+        return <TimeGridBackgroundEvent {...settings} />
+      }
+      return <TimeGridEvent {...settings} />
     })
   }
 
@@ -413,6 +380,7 @@ class DayColumn extends React.Component {
 
 DayColumn.propTypes = {
   events: PropTypes.array.isRequired,
+  backgroundEvents: PropTypes.array,
   step: PropTypes.number.isRequired,
   date: PropTypes.instanceOf(Date).isRequired,
   min: PropTypes.instanceOf(Date).isRequired,
@@ -451,6 +419,7 @@ DayColumn.propTypes = {
 DayColumn.defaultProps = {
   dragThroughEvents: true,
   timeslots: 2,
+  backgroundEvents: [],
 }
 
 export default DayColumn
