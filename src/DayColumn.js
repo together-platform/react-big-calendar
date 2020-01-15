@@ -1,10 +1,10 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import { findDOMNode } from 'react-dom'
-import cn from 'classnames'
+import clsx from 'clsx'
 
 import Selection, { getBoundsForNode, isEvent } from './Selection'
-import dates from './utils/dates'
+import * as dates from './utils/dates'
 import * as TimeSlotUtils from './utils/TimeSlots'
 import { isSelected } from './utils/selection'
 
@@ -13,9 +13,11 @@ import * as DayEventLayout from './utils/DayEventLayout'
 import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
 import TimeGridBackgroundEvent from './TimeGridBackgroundEvent'
+import { DayLayoutAlgorithmPropType } from './utils/propTypes'
 
 class DayColumn extends React.Component {
   state = { selecting: false, timeIndicatorPosition: null }
+  intervalTriggered = false
 
   constructor(...args) {
     super(...args)
@@ -45,18 +47,32 @@ class DayColumn extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevProps.isNow !== this.props.isNow) {
+    const getNowChanged = !dates.eq(
+      prevProps.getNow(),
+      this.props.getNow(),
+      'minutes'
+    )
+
+    if (prevProps.isNow !== this.props.isNow || getNowChanged) {
       this.clearTimeIndicatorInterval()
 
       if (this.props.isNow) {
-        this.setTimeIndicatorPositionUpdateInterval(
+        const tail =
+          !getNowChanged &&
+          dates.eq(prevProps.date, this.props.date, 'minutes') &&
           prevState.timeIndicatorPosition === this.state.timeIndicatorPosition
-        )
+
+        this.setTimeIndicatorPositionUpdateInterval(tail)
       }
+    } else if (
+      this.props.isNow &&
+      (!dates.eq(prevProps.min, this.props.min, 'minutes') ||
+        !dates.eq(prevProps.max, this.props.max, 'minutes'))
+    ) {
+      this.positionTimeIndicator()
     }
   }
 
-  intervalTriggered = false
   /**
    * @param tail {Boolean} - whether `positionTimeIndicator` call should be
    *   deferred or called upon setting interval (`true` - if deferred);
@@ -83,7 +99,7 @@ class DayColumn extends React.Component {
     const current = getNow()
 
     if (current >= min && current <= max) {
-      const { top } = this.slotMetrics.getRange(current, current)
+      const top = this.slotMetrics.getCurrentTimePosition(current)
       this.setState({ timeIndicatorPosition: top })
     } else {
       this.clearTimeIndicatorInterval()
@@ -112,7 +128,7 @@ class DayColumn extends React.Component {
     return (
       <div
         style={style}
-        className={cn(
+        className={clsx(
           className,
           'rbc-day-slot',
           'rbc-time-column',
@@ -138,7 +154,7 @@ class DayColumn extends React.Component {
           components={components}
           slotMetrics={slotMetrics}
         >
-          <div className={cn('rbc-events-container', rtl && 'rtl')}>
+          <div className={clsx('rbc-events-container', rtl && 'rtl')}>
             {this.renderEvents({
               events: this.props.backgroundEvents,
               isBackgroundEvent: true,
@@ -164,7 +180,8 @@ class DayColumn extends React.Component {
 
   renderEvents = ({ events, isBackgroundEvent }) => {
     let {
-      rtl: isRtl,
+      events,
+      rtl,
       selected,
       accessors,
       localizer,
@@ -172,6 +189,7 @@ class DayColumn extends React.Component {
       components,
       step,
       timeslots,
+      dayLayoutAlgorithm,
     } = this.props
 
     const { slotMetrics } = this
@@ -182,6 +200,7 @@ class DayColumn extends React.Component {
       accessors,
       slotMetrics,
       minimumStartDifference: Math.ceil((step * timeslots) / 2),
+      dayLayoutAlgorithm,
     })
 
     return styledEvents.map(({ event, style }, idx) => {
@@ -218,10 +237,41 @@ class DayColumn extends React.Component {
       }
 
       if (isBackgroundEvent) {
-        return <TimeGridBackgroundEvent {...settings} />
-      } else {
-        return <TimeGridEvent {...settings} />
-      }
+        return (
+          <TimeGridBackgroundEvent 
+            style={style}
+            event={event}
+            label={label}
+            key={'evt_' + idx}
+            getters={getters}
+            rtl={rtl}
+            components={components}
+            continuesEarlier={continuesEarlier}
+            continuesLater={continuesLater}
+            accessors={accessors}
+            selected={isSelected(event, selected)}
+            onClick={e => this._select(event, e)}
+            onDoubleClick={e => this._doubleClick(event, e)} 
+          />
+        )
+      } 
+      return (
+        <TimeGridEvent
+          style={style}
+          event={event}
+          label={label}
+          key={'evt_' + idx}
+          getters={getters}
+          rtl={rtl}
+          components={components}
+          continuesEarlier={continuesEarlier}
+          continuesLater={continuesLater}
+          accessors={accessors}
+          selected={isSelected(event, selected)}
+          onClick={e => this._select(event, e)}
+          onDoubleClick={e => this._doubleClick(event, e)}
+        />
+      )
     })
   }
 
@@ -241,7 +291,7 @@ class DayColumn extends React.Component {
         if (
           (dates.eq(current.startDate, start, 'minutes') &&
             dates.eq(current.endDate, end, 'minutes')) ||
-          onSelecting({ start, end }) === false
+          onSelecting({ start, end, resourceId: this.props.resource }) === false
         )
           return
       }
@@ -261,11 +311,16 @@ class DayColumn extends React.Component {
         getBoundsForNode(node)
       )
 
-      if (!this.state.selecting) this._initialSlot = currentSlot
+      if (!this.state.selecting) {
+        this._initialSlot = currentSlot
+      }
 
       let initialSlot = this._initialSlot
-      if (initialSlot === currentSlot)
-        currentSlot = this.slotMetrics.nextSlot(initialSlot)
+      if (dates.lte(initialSlot, currentSlot)) {
+        currentSlot = this.slotMetrics.nextSlot(currentSlot)
+      } else if (dates.gt(initialSlot, currentSlot)) {
+        initialSlot = this.slotMetrics.nextSlot(initialSlot)
+      }
 
       const selectRange = this.slotMetrics.getRange(
         dates.min(initialSlot, currentSlot),
@@ -389,6 +444,8 @@ DayColumn.propTypes = {
   className: PropTypes.string,
   dragThroughEvents: PropTypes.bool,
   resource: PropTypes.any,
+
+  dayLayoutAlgorithm: DayLayoutAlgorithmPropType,
 }
 
 DayColumn.defaultProps = {
