@@ -4659,6 +4659,7 @@ TimeGrid.propTypes =
     ? {
         events: PropTypes.array.isRequired,
         resources: PropTypes.array,
+        backgroundEvents: PropTypes.array,
         step: PropTypes.number,
         timeslots: PropTypes.number,
         range: PropTypes.arrayOf(PropTypes.instanceOf(Date)),
@@ -4693,6 +4694,7 @@ TimeGrid.defaultProps = {
   min: startOf(new Date(), 'day'),
   max: endOf(new Date(), 'day'),
   scrollToTime: startOf(new Date(), 'day'),
+  backgroundEvents: [],
 }
 
 var Day =
@@ -6472,7 +6474,7 @@ Calendar.propTypes =
           event: PropTypes.elementType,
           eventWrapper: PropTypes.elementType,
           eventContainerWrapper: PropTypes.elementType,
-          backgroundEventWrapper: elementType,
+          backgroundEventWrapper: PropTypes.elementType,
           dateCellWrapper: PropTypes.elementType,
           timeSlotWrapper: PropTypes.elementType,
           timeGutterHeader: PropTypes.elementType,
