@@ -12,6 +12,7 @@ import { notify } from './utils/helpers'
 import * as DayEventLayout from './utils/DayEventLayout'
 import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
+import TimeGridBackgroundEvent from './TimeGridBackgroundEvent'
 import { DayLayoutAlgorithmPropType } from './utils/propTypes'
 
 class DayColumn extends React.Component {
@@ -154,7 +155,11 @@ class DayColumn extends React.Component {
           slotMetrics={slotMetrics}
         >
           <div className={clsx('rbc-events-container', rtl && 'rtl')}>
-            {this.renderEvents()}
+            {this.renderEvents({
+              events: this.props.backgroundEvents,
+              isBackgroundEvent: true,
+            })}
+            {this.renderEvents({ events: this.props.events })}
           </div>
         </EventContainer>
 
@@ -173,7 +178,7 @@ class DayColumn extends React.Component {
     )
   }
 
-  renderEvents = () => {
+  renderEvents = ({ events, isBackgroundEvent }) => {
     let {
       events,
       rtl,
@@ -215,7 +220,41 @@ class DayColumn extends React.Component {
 
       let continuesEarlier = startsBeforeDay || slotMetrics.startsBefore(start)
       let continuesLater = startsAfterDay || slotMetrics.startsAfter(end)
+      const settings = {
+        style: style,
+        event: event,
+        label: label,
+        key: 'evt_' + idx,
+        getters: getters,
+        isRtl: isRtl,
+        components: components,
+        continuesEarlier: continuesEarlier,
+        continuesLater: continuesLater,
+        accessors: accessors,
+        selected: isSelected(event, selected),
+        onClick: e => this._select(event, e),
+        onDoubleClick: e => this._doubleClick(event, e),
+      }
 
+      if (isBackgroundEvent) {
+        return (
+          <TimeGridBackgroundEvent 
+            style={style}
+            event={event}
+            label={label}
+            key={'evt_' + idx}
+            getters={getters}
+            rtl={rtl}
+            components={components}
+            continuesEarlier={continuesEarlier}
+            continuesLater={continuesLater}
+            accessors={accessors}
+            selected={isSelected(event, selected)}
+            onClick={e => this._select(event, e)}
+            onDoubleClick={e => this._doubleClick(event, e)} 
+          />
+        )
+      } 
       return (
         <TimeGridEvent
           style={style}
