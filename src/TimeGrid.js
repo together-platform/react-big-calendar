@@ -333,7 +333,7 @@ export default class TimeGrid extends Component {
 TimeGrid.propTypes = {
   events: PropTypes.array.isRequired,
   resources: PropTypes.array,
-
+  backgroundEvents: PropTypes.array,
   step: PropTypes.number,
   timeslots: PropTypes.number,
   range: PropTypes.arrayOf(PropTypes.instanceOf(Date)),
@@ -374,4 +374,5 @@ TimeGrid.defaultProps = {
   min: dates.startOf(new Date(), 'day'),
   max: dates.endOf(new Date(), 'day'),
   scrollToTime: dates.startOf(new Date(), 'day'),
+  backgroundEvents: [],
 }
