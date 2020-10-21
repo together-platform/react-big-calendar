@@ -27,7 +27,7 @@ export default class TimeGrid extends Component {
     this._scrollRatio = null
   }
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     this.calculateScroll()
   }
 
@@ -73,7 +73,7 @@ export default class TimeGrid extends Component {
     //this.checkOverflow()
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { range, scrollToTime } = this.props
     // When paginating, reset scroll
     if (
@@ -101,6 +101,7 @@ export default class TimeGrid extends Component {
       start: slots[0],
       end: slots[slots.length - 1],
       action: slotInfo.action,
+      resourceId: slotInfo.resourceId,
     })
   }
 
@@ -242,6 +243,7 @@ export default class TimeGrid extends Component {
           onSelectSlot={this.handleSelectAllDaySlot}
           onSelectEvent={this.handleSelectAlldayEvent}
           onDoubleClickEvent={this.props.onDoubleClickEvent}
+          onKeyPressEvent={this.props.onKeyPressEvent}
           onDrillDown={this.props.onDrillDown}
           getDrilldownView={this.props.getDrilldownView}
         />
@@ -261,6 +263,7 @@ export default class TimeGrid extends Component {
             timeslots={this.props.timeslots}
             components={components}
             className="rbc-time-gutter"
+            getters={getters}
           />
           {this.renderEvents(
             range,
@@ -362,6 +365,7 @@ TimeGrid.propTypes = {
   onSelectStart: PropTypes.func,
   onSelectEvent: PropTypes.func,
   onDoubleClickEvent: PropTypes.func,
+  onKeyPressEvent: PropTypes.func,
   onDrillDown: PropTypes.func,
   getDrilldownView: PropTypes.func.isRequired,
 

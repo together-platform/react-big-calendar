@@ -2,7 +2,7 @@
 
 An events calendar component built for React and made for modern browsers (read: IE10+) and uses flexbox over the classic tables-ception approach.
 
-[**DEMO and Docs**](http://intljusticemission.github.io/react-big-calendar/examples/index.html)
+[**DEMO and Docs**](http://jquense.github.io/react-big-calendar/examples/index.html)
 
 Inspired by [Full Calendar](http://fullcalendar.io/).
 
@@ -112,8 +112,8 @@ const MyCalendar = props => (
 
 ## Custom Styling
 
-Out of the box you can include the compiled css files and be up and running. But, sometimes, you may want to style
-Big Calendar to match your application styling. For this reason SASS files are included with Big Calendar.
+Out of the box, you can include the compiled CSS files and be up and running. But, sometimes, you may want to style
+Big Calendar to match your application styling. For this reason, SASS files are included with Big Calendar.
 
 ```
   @import 'react-big-calendar/lib/sass/styles';
@@ -126,4 +126,4 @@ Big Calendar. Carefully test each change accordingly.
 
 ## Join us on Reactiflux Discord
 
-Join us on [Reactiflux Discord](https://discord.gg/uJsgpkC) community under the channel #react-big-calendar if you have any questions.
+Join us on [Reactiflux Discord](https://discord.gg/PPgj6tb) community under the channel #libraries if you have any questions.
