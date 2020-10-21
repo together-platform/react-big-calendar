@@ -2,7 +2,7 @@ import _extends from '@babel/runtime/helpers/esm/extends'
 import _objectWithoutPropertiesLoose from '@babel/runtime/helpers/esm/objectWithoutPropertiesLoose'
 import _inheritsLoose from '@babel/runtime/helpers/esm/inheritsLoose'
 import PropTypes from 'prop-types'
-import React, { Component } from 'react'
+import React, { Component, useRef, useEffect } from 'react'
 import { uncontrollable } from 'uncontrollable'
 import clsx from 'clsx'
 import invariant from 'invariant'
@@ -308,6 +308,7 @@ var EventCell =
         isAllDay = _this$props.isAllDay,
         onSelect = _this$props.onSelect,
         _onDoubleClick = _this$props.onDoubleClick,
+        _onKeyPress = _this$props.onKeyPress,
         localizer = _this$props.localizer,
         continuesPrior = _this$props.continuesPrior,
         continuesAfter = _this$props.continuesAfter,
@@ -327,6 +328,7 @@ var EventCell =
           'isAllDay',
           'onSelect',
           'onDoubleClick',
+          'onKeyPress',
           'localizer',
           'continuesPrior',
           'continuesAfter',
@@ -387,6 +389,9 @@ var EventCell =
             onDoubleClick: function onDoubleClick(e) {
               return _onDoubleClick && _onDoubleClick(event, e)
             },
+            onKeyPress: function onKeyPress(e) {
+              return _onKeyPress && _onKeyPress(event, e)
+            },
           }),
           typeof children === 'function' ? children(content) : content
         )
@@ -412,6 +417,7 @@ EventCell.propTypes =
         localizer: PropTypes.object,
         onSelect: PropTypes.func,
         onDoubleClick: PropTypes.func,
+        onKeyPress: PropTypes.func,
       }
     : {}
 
@@ -532,6 +538,8 @@ var Popup =
     }
 
     _proto.render = function render() {
+      var _this = this
+
       var _this$props2 = this.props,
         events = _this$props2.events,
         selected = _this$props2.selected,
@@ -540,6 +548,7 @@ var Popup =
         components = _this$props2.components,
         onSelect = _this$props2.onSelect,
         onDoubleClick = _this$props2.onDoubleClick,
+        onKeyPress = _this$props2.onKeyPress,
         slotStart = _this$props2.slotStart,
         slotEnd = _this$props2.slotEnd,
         localizer = _this$props2.localizer,
@@ -576,11 +585,19 @@ var Popup =
             accessors: accessors,
             components: components,
             onDoubleClick: onDoubleClick,
+            onKeyPress: onKeyPress,
             continuesPrior: lt(accessors.end(event), slotStart, 'day'),
             continuesAfter: gte(accessors.start(event), slotEnd, 'day'),
             slotStart: slotStart,
             slotEnd: slotEnd,
             selected: isSelected(event, selected),
+            draggable: true,
+            onDragStart: function onDragStart() {
+              return _this.props.handleDragStart(event)
+            },
+            onDragEnd: function onDragEnd() {
+              return _this.props.show()
+            },
           })
         })
       )
@@ -608,6 +625,9 @@ Popup.propTypes =
         localizer: PropTypes.object.isRequired,
         onSelect: PropTypes.func,
         onDoubleClick: PropTypes.func,
+        onKeyPress: PropTypes.func,
+        handleDragStart: PropTypes.func,
+        show: PropTypes.func,
         slotStart: PropTypes.instanceOf(Date),
         slotEnd: PropTypes.number,
         popperRef: PropTypes.oneOfType([
@@ -1225,7 +1245,7 @@ var BackgroundCells =
       this._teardownSelectable()
     }
 
-    _proto.componentWillReceiveProps = function componentWillReceiveProps(
+    _proto.UNSAFE_componentWillReceiveProps = function UNSAFE_componentWillReceiveProps(
       nextProps
     ) {
       if (nextProps.selectable && !this.props.selectable) this._selectable()
@@ -1404,6 +1424,7 @@ var BackgroundCells =
             action: action,
             bounds: bounds,
             box: box,
+            resourceId: this.props.resourceId,
           })
     }
 
@@ -1427,6 +1448,7 @@ BackgroundCells.propTypes =
         range: PropTypes.arrayOf(PropTypes.instanceOf(Date)),
         rtl: PropTypes.bool,
         type: PropTypes.string,
+        resourceId: PropTypes.any,
       }
     : {}
 
@@ -1443,6 +1465,7 @@ var EventRowMixin = {
     getters: PropTypes.object.isRequired,
     onSelect: PropTypes.func,
     onDoubleClick: PropTypes.func,
+    onKeyPress: PropTypes.func,
   },
   defaultProps: {
     segments: [],
@@ -1455,6 +1478,7 @@ var EventRowMixin = {
       getters = props.getters,
       onSelect = props.onSelect,
       onDoubleClick = props.onDoubleClick,
+      onKeyPress = props.onKeyPress,
       localizer = props.localizer,
       slotMetrics = props.slotMetrics,
       components = props.components
@@ -1468,6 +1492,7 @@ var EventRowMixin = {
       components: components,
       onSelect: onSelect,
       onDoubleClick: onDoubleClick,
+      onKeyPress: onKeyPress,
       continuesPrior: continuesPrior,
       continuesAfter: continuesAfter,
       slotStart: slotMetrics.first,
@@ -1794,7 +1819,7 @@ var isSegmentInSlot$1 = function isSegmentInSlot(seg, slot) {
 }
 
 var isEqual = function isEqual(a, b) {
-  return a.range === b.range && a.events === b.events
+  return a[0].range === b[0].range && a[0].events === b[0].events
 }
 
 function getSlotMetrics() {
@@ -2022,6 +2047,7 @@ var DateContentRow =
         onSelectStart = _this$props5.onSelectStart,
         onSelectEnd = _this$props5.onSelectEnd,
         onDoubleClick = _this$props5.onDoubleClick,
+        onKeyPress = _this$props5.onKeyPress,
         resourceId = _this$props5.resourceId,
         longPressThreshold = _this$props5.longPressThreshold,
         isAllDay = _this$props5.isAllDay
@@ -2038,6 +2064,7 @@ var DateContentRow =
         components: components,
         onSelect: onSelect,
         onDoubleClick: onDoubleClick,
+        onKeyPress: onKeyPress,
         resourceId: resourceId,
         slotMetrics: metrics,
       }
@@ -2059,6 +2086,7 @@ var DateContentRow =
           onSelectSlot: this.handleSelectSlot,
           components: components,
           longPressThreshold: longPressThreshold,
+          resourceId: resourceId,
         }),
         React.createElement(
           'div',
@@ -2133,6 +2161,7 @@ DateContentRow.propTypes =
         onSelectEnd: PropTypes.func,
         onSelectStart: PropTypes.func,
         onDoubleClick: PropTypes.func,
+        onKeyPress: PropTypes.func,
         dayPropGetter: PropTypes.func,
         getNow: PropTypes.func.isRequired,
         isAllDay: PropTypes.bool,
@@ -2266,6 +2295,7 @@ var MonthView =
           onShowMore: _this.handleShowMore,
           onSelect: _this.handleSelectEvent,
           onDoubleClick: _this.handleDoubleClickEvent,
+          onKeyPress: _this.handleKeyPressEvent,
           onSelectSlot: _this.handleSelectSlot,
           longPressThreshold: longPressThreshold,
           rtl: _this.props.rtl,
@@ -2352,6 +2382,20 @@ var MonthView =
         notify(_this.props.onDoubleClickEvent, args)
       }
 
+      _this.handleKeyPressEvent = function() {
+        _this.clearSelection()
+
+        for (
+          var _len4 = arguments.length, args = new Array(_len4), _key4 = 0;
+          _key4 < _len4;
+          _key4++
+        ) {
+          args[_key4] = arguments[_key4]
+        }
+
+        notify(_this.props.onKeyPressEvent, args)
+      }
+
       _this.handleShowMore = function(events, date, cell, slot, target) {
         var _this$props3 = _this.props,
           popup = _this$props3.popup,
@@ -2382,6 +2426,12 @@ var MonthView =
         notify(onShowMore, [events, date, slot])
       }
 
+      _this.overlayDisplay = function() {
+        _this.setState({
+          overlay: null,
+        })
+      }
+
       _this._bgRows = []
       _this._pendingSelection = []
       _this.slotRowRef = React.createRef()
@@ -2394,7 +2444,7 @@ var MonthView =
 
     var _proto = MonthView.prototype
 
-    _proto.componentWillReceiveProps = function componentWillReceiveProps(
+    _proto.UNSAFE_componentWillReceiveProps = function UNSAFE_componentWillReceiveProps(
       _ref2
     ) {
       var date = _ref2.date
@@ -2519,11 +2569,14 @@ var MonthView =
               components: components,
               localizer: localizer,
               position: overlay.position,
+              show: _this3.overlayDisplay,
               events: overlay.events,
               slotStart: overlay.date,
               slotEnd: overlay.end,
               onSelect: _this3.handleSelectEvent,
               onDoubleClick: _this3.handleDoubleClickEvent,
+              onKeyPress: _this3.handleKeyPressEvent,
+              handleDragStart: _this3.props.handleDragStart,
             })
           )
         }
@@ -2585,10 +2638,12 @@ MonthView.propTypes =
         onSelectSlot: PropTypes.func,
         onSelectEvent: PropTypes.func,
         onDoubleClickEvent: PropTypes.func,
+        onKeyPressEvent: PropTypes.func,
         onShowMore: PropTypes.func,
         onDrillDown: PropTypes.func,
         getDrilldownView: PropTypes.func.isRequired,
         popup: PropTypes.bool,
+        handleDragStart: PropTypes.func,
         popupOffset: PropTypes.oneOfType([
           PropTypes.number,
           PropTypes.shape({
@@ -2754,7 +2809,7 @@ function getSlotMetrics$1(_ref) {
       var rangeStartMin = positionFromDate(rangeStart)
       var rangeEndMin = positionFromDate(rangeEnd)
       var top =
-        rangeEndMin - rangeStartMin < step && !eq(end, rangeEnd)
+        rangeEndMin > step * numSlots && !eq(end, rangeEnd)
           ? ((rangeStartMin - step) / (step * numSlots)) * 100
           : (rangeStartMin / (step * numSlots)) * 100
       return {
@@ -3120,7 +3175,7 @@ function getStyledEvents$1(_ref) {
     slotMetrics = _ref.slotMetrics,
     accessors = _ref.accessors,
     dayLayoutAlgorithm = _ref.dayLayoutAlgorithm
-  var algorithm = null
+  var algorithm = dayLayoutAlgorithm
   if (dayLayoutAlgorithm in DefaultAlgorithms)
     algorithm = DefaultAlgorithms[dayLayoutAlgorithm]
 
@@ -3157,11 +3212,15 @@ var TimeSlotGroup =
           _this$props$component2 === void 0
             ? NoopWrapper
             : _this$props$component2
+      var groupProps = getters ? getters.slotGroupProp() : {}
       return React.createElement(
         'div',
-        {
-          className: 'rbc-timeslot-group',
-        },
+        _extends(
+          {
+            className: 'rbc-timeslot-group',
+          },
+          groupProps
+        ),
         group.map(function(value, idx) {
           var slotProps = getters ? getters.slotProp(value, resource) : {}
           return React.createElement(
@@ -3216,6 +3275,7 @@ function TimeGridEvent(props) {
     getters = props.getters,
     onClick = props.onClick,
     onDoubleClick = props.onDoubleClick,
+    onKeyPress = props.onKeyPress,
     _props$components = props.components,
     Event = _props$components.event,
     EventWrapper = _props$components.eventWrapper
@@ -3264,6 +3324,7 @@ function TimeGridEvent(props) {
       {
         onClick: onClick,
         onDoubleClick: onDoubleClick,
+        onKeyPress: onKeyPress,
         style: _extends(
           {},
           userProps.style,
@@ -3446,6 +3507,9 @@ var DayColumn =
             onDoubleClick: function onDoubleClick(e) {
               return _this._doubleClick(event, e)
             },
+            onKeyPress: function onKeyPress(e) {
+              return _this._keyPress(event, e)
+            },
           }
 
           if (isBackgroundEvent) {
@@ -3602,7 +3666,7 @@ var DayColumn =
 
         while (lte(current, endDate)) {
           slots.push(current)
-          current = add(current, _this.props.step, 'minutes')
+          current = new Date(+current + _this.props.step * 60 * 1000) // using Date ensures not to create an endless loop the day DST begins
         }
 
         notify(_this.props.onSelectSlot, {
@@ -3640,6 +3704,18 @@ var DayColumn =
         notify(_this.props.onDoubleClickEvent, args)
       }
 
+      _this._keyPress = function() {
+        for (
+          var _len4 = arguments.length, args = new Array(_len4), _key4 = 0;
+          _key4 < _len4;
+          _key4++
+        ) {
+          args[_key4] = arguments[_key4]
+        }
+
+        notify(_this.props.onKeyPressEvent, args)
+      }
+
       _this.slotMetrics = getSlotMetrics$1(_this.props)
       return _this
     }
@@ -3660,7 +3736,7 @@ var DayColumn =
       this.clearTimeIndicatorInterval()
     }
 
-    _proto.componentWillReceiveProps = function componentWillReceiveProps(
+    _proto.UNSAFE_componentWillReceiveProps = function UNSAFE_componentWillReceiveProps(
       nextProps
     ) {
       if (nextProps.selectable && !this.props.selectable) this._selectable()
@@ -3738,6 +3814,7 @@ var DayColumn =
 
       if (current >= min && current <= max) {
         var top = this.slotMetrics.getCurrentTimePosition(current)
+        this.intervalTriggered = true
         this.setState({
           timeIndicatorPosition: top,
         })
@@ -3844,6 +3921,7 @@ var DayColumn =
             )
           ),
         isNow &&
+          this.intervalTriggered &&
           React.createElement('div', {
             className: 'rbc-current-time-indicator',
             style: {
@@ -3883,6 +3961,7 @@ DayColumn.propTypes =
         onSelectSlot: PropTypes.func.isRequired,
         onSelectEvent: PropTypes.func.isRequired,
         onDoubleClickEvent: PropTypes.func.isRequired,
+        onKeyPressEvent: PropTypes.func,
         className: PropTypes.string,
         dragThroughEvents: PropTypes.bool,
         resource: PropTypes.any,
@@ -3946,7 +4025,7 @@ var TimeGutter =
 
     var _proto = TimeGutter.prototype
 
-    _proto.componentWillReceiveProps = function componentWillReceiveProps(
+    _proto.UNSAFE_componentWillReceiveProps = function UNSAFE_componentWillReceiveProps(
       nextProps
     ) {
       var min = nextProps.min,
@@ -3966,7 +4045,8 @@ var TimeGutter =
 
       var _this$props3 = this.props,
         resource = _this$props3.resource,
-        components = _this$props3.components
+        components = _this$props3.components,
+        getters = _this$props3.getters
       return React.createElement(
         'div',
         {
@@ -3979,6 +4059,7 @@ var TimeGutter =
             resource: resource,
             components: components,
             renderSlot: _this2.renderSlot,
+            getters: getters,
           })
         })
       )
@@ -3995,6 +4076,7 @@ TimeGutter.propTypes =
         step: PropTypes.number.isRequired,
         getNow: PropTypes.func.isRequired,
         components: PropTypes.object.isRequired,
+        getters: PropTypes.object,
         localizer: PropTypes.object.isRequired,
         resource: PropTypes.string,
       }
@@ -4073,6 +4155,7 @@ var TimeGridHeader =
           localizer: localizer,
           onSelect: _this.props.onSelectEvent,
           onDoubleClick: _this.props.onDoubleClickEvent,
+          onKeyPress: _this.props.onKeyPressEvent,
           onSelectSlot: _this.props.onSelectSlot,
           longPressThreshold: _this.props.longPressThreshold,
         })
@@ -4242,6 +4325,7 @@ var TimeGridHeader =
               localizer: localizer,
               onSelect: _this3.props.onSelectEvent,
               onDoubleClick: _this3.props.onDoubleClickEvent,
+              onKeyPress: _this3.props.onKeyPressEvent,
               onSelectSlot: _this3.props.onSelectSlot,
               longPressThreshold: _this3.props.longPressThreshold,
             })
@@ -4273,6 +4357,7 @@ TimeGridHeader.propTypes =
         onSelectSlot: PropTypes.func,
         onSelectEvent: PropTypes.func,
         onDoubleClickEvent: PropTypes.func,
+        onKeyPressEvent: PropTypes.func,
         onDrillDown: PropTypes.func,
         getDrilldownView: PropTypes.func.isRequired,
         scrollRef: PropTypes.any,
@@ -4355,6 +4440,7 @@ var TimeGrid =
           start: slots[0],
           end: slots[slots.length - 1],
           action: slotInfo.action,
+          resourceId: slotInfo.resourceId,
         })
       }
 
@@ -4392,7 +4478,7 @@ var TimeGrid =
 
     var _proto = TimeGrid.prototype
 
-    _proto.componentWillMount = function componentWillMount() {
+    _proto.UNSAFE_componentWillMount = function UNSAFE_componentWillMount() {
       this.calculateScroll()
     }
 
@@ -4424,7 +4510,7 @@ var TimeGrid =
       this.applyScroll() //this.checkOverflow()
     }
 
-    _proto.componentWillReceiveProps = function componentWillReceiveProps(
+    _proto.UNSAFE_componentWillReceiveProps = function UNSAFE_componentWillReceiveProps(
       nextProps
     ) {
       var _this$props = this.props,
@@ -4577,6 +4663,7 @@ var TimeGrid =
           onSelectSlot: this.handleSelectAllDaySlot,
           onSelectEvent: this.handleSelectAlldayEvent,
           onDoubleClickEvent: this.props.onDoubleClickEvent,
+          onKeyPressEvent: this.props.onKeyPressEvent,
           onDrillDown: this.props.onDrillDown,
           getDrilldownView: this.props.getDrilldownView,
         }),
@@ -4598,6 +4685,7 @@ var TimeGrid =
             timeslots: this.props.timeslots,
             components: components,
             className: 'rbc-time-gutter',
+            getters: getters,
           }),
           this.renderEvents(range, rangeEvents, rangeBackgroundEvents, getNow())
         )
@@ -4683,6 +4771,7 @@ TimeGrid.propTypes =
         onSelectStart: PropTypes.func,
         onSelectEvent: PropTypes.func,
         onDoubleClickEvent: PropTypes.func,
+        onKeyPressEvent: PropTypes.func,
         onDrillDown: PropTypes.func,
         getDrilldownView: PropTypes.func.isRequired,
         dayLayoutAlgorithm: DayLayoutAlgorithmPropType,
@@ -4894,277 +4983,242 @@ WorkWeek.title = function(date, _ref) {
   )
 }
 
-var Agenda =
-  /*#__PURE__*/
-  (function(_React$Component) {
-    _inheritsLoose(Agenda, _React$Component)
+function Agenda(_ref) {
+  var selected = _ref.selected,
+    getters = _ref.getters,
+    accessors = _ref.accessors,
+    localizer = _ref.localizer,
+    components = _ref.components,
+    length = _ref.length,
+    date = _ref.date,
+    events = _ref.events
+  var headerRef = useRef(null)
+  var dateColRef = useRef(null)
+  var timeColRef = useRef(null)
+  var contentRef = useRef(null)
+  var tbodyRef = useRef(null)
+  useEffect(function() {
+    _adjustHeader()
+  })
 
-    function Agenda(props) {
-      var _this
-
-      _this = _React$Component.call(this, props) || this
-
-      _this.renderDay = function(day, events, dayKey) {
-        var _this$props = _this.props,
-          selected = _this$props.selected,
-          getters = _this$props.getters,
-          accessors = _this$props.accessors,
-          localizer = _this$props.localizer,
-          _this$props$component = _this$props.components,
-          Event = _this$props$component.event,
-          AgendaDate = _this$props$component.date
-        events = events.filter(function(e) {
-          return inRange(e, startOf(day, 'day'), endOf(day, 'day'), accessors)
-        })
-        return events.map(function(event, idx) {
-          var title = accessors.title(event)
-          var end = accessors.end(event)
-          var start = accessors.start(event)
-          var userProps = getters.eventProp(
-            event,
-            start,
-            end,
-            isSelected(event, selected)
-          )
-          var dateLabel = idx === 0 && localizer.format(day, 'agendaDateFormat')
-          var first =
-            idx === 0
-              ? React.createElement(
-                  'td',
-                  {
-                    rowSpan: events.length,
-                    className: 'rbc-agenda-date-cell',
-                  },
-                  AgendaDate
-                    ? React.createElement(AgendaDate, {
-                        day: day,
-                        label: dateLabel,
-                      })
-                    : dateLabel
-                )
-              : false
-          return React.createElement(
-            'tr',
-            {
-              key: dayKey + '_' + idx,
-              className: userProps.className,
-              style: userProps.style,
-            },
-            first,
-            React.createElement(
-              'td',
-              {
-                className: 'rbc-agenda-time-cell',
-              },
-              _this.timeRangeLabel(day, event)
-            ),
-            React.createElement(
-              'td',
-              {
-                className: 'rbc-agenda-event-cell',
-              },
-              Event
-                ? React.createElement(Event, {
-                    event: event,
-                    title: title,
-                  })
-                : title
-            )
-          )
-        }, [])
-      }
-
-      _this.timeRangeLabel = function(day, event) {
-        var _this$props2 = _this.props,
-          accessors = _this$props2.accessors,
-          localizer = _this$props2.localizer,
-          components = _this$props2.components
-        var labelClass = '',
-          TimeComponent = components.time,
-          label = localizer.messages.allDay
-        var end = accessors.end(event)
-        var start = accessors.start(event)
-
-        if (!accessors.allDay(event)) {
-          if (eq(start, end)) {
-            label = localizer.format(start, 'agendaTimeFormat')
-          } else if (eq(start, end, 'day')) {
-            label = localizer.format(
-              {
-                start: start,
-                end: end,
-              },
-              'agendaTimeRangeFormat'
-            )
-          } else if (eq(day, start, 'day')) {
-            label = localizer.format(start, 'agendaTimeFormat')
-          } else if (eq(day, end, 'day')) {
-            label = localizer.format(end, 'agendaTimeFormat')
-          }
-        }
-
-        if (gt(day, start, 'day')) labelClass = 'rbc-continues-prior'
-        if (lt(day, end, 'day')) labelClass += ' rbc-continues-after'
-        return React.createElement(
-          'span',
-          {
-            className: labelClass.trim(),
-          },
-          TimeComponent
-            ? React.createElement(TimeComponent, {
-                event: event,
-                day: day,
-                label: label,
-              })
-            : label
-        )
-      }
-
-      _this._adjustHeader = function() {
-        if (!_this.tbodyRef.current) return
-        var header = _this.headerRef.current
-        var firstRow = _this.tbodyRef.current.firstChild
-        if (!firstRow) return
-        var isOverflowing =
-          _this.contentRef.current.scrollHeight >
-          _this.contentRef.current.clientHeight
-        var widths = _this._widths || []
-        _this._widths = [
-          getWidth(firstRow.children[0]),
-          getWidth(firstRow.children[1]),
-        ]
-
-        if (widths[0] !== _this._widths[0] || widths[1] !== _this._widths[1]) {
-          _this.dateColRef.current.style.width = _this._widths[0] + 'px'
-          _this.timeColRef.current.style.width = _this._widths[1] + 'px'
-        }
-
-        if (isOverflowing) {
-          addClass(header, 'rbc-header-overflowing')
-          header.style.marginRight = scrollbarSize() + 'px'
-        } else {
-          removeClass(header, 'rbc-header-overflowing')
-        }
-      }
-
-      _this.headerRef = React.createRef()
-      _this.dateColRef = React.createRef()
-      _this.timeColRef = React.createRef()
-      _this.contentRef = React.createRef()
-      _this.tbodyRef = React.createRef()
-      return _this
-    }
-
-    var _proto = Agenda.prototype
-
-    _proto.componentDidMount = function componentDidMount() {
-      this._adjustHeader()
-    }
-
-    _proto.componentDidUpdate = function componentDidUpdate() {
-      this._adjustHeader()
-    }
-
-    _proto.render = function render() {
-      var _this2 = this
-
-      var _this$props3 = this.props,
-        length = _this$props3.length,
-        date = _this$props3.date,
-        events = _this$props3.events,
-        accessors = _this$props3.accessors,
-        localizer = _this$props3.localizer
-      var messages = localizer.messages
-      var end = add(date, length, 'day')
-      var range$1 = range(date, end, 'day')
-      events = events.filter(function(event) {
-        return inRange(event, date, end, accessors)
-      })
-      events.sort(function(a, b) {
-        return +accessors.start(a) - +accessors.start(b)
-      })
-      return React.createElement(
-        'div',
-        {
-          className: 'rbc-agenda-view',
-        },
-        events.length !== 0
+  var renderDay = function renderDay(day, events, dayKey) {
+    var Event = components.event,
+      AgendaDate = components.date
+    events = events.filter(function(e) {
+      return inRange(e, startOf(day, 'day'), endOf(day, 'day'), accessors)
+    })
+    return events.map(function(event, idx) {
+      var title = accessors.title(event)
+      var end = accessors.end(event)
+      var start = accessors.start(event)
+      var userProps = getters.eventProp(
+        event,
+        start,
+        end,
+        isSelected(event, selected)
+      )
+      var dateLabel = idx === 0 && localizer.format(day, 'agendaDateFormat')
+      var first =
+        idx === 0
           ? React.createElement(
-              React.Fragment,
+              'td',
+              {
+                rowSpan: events.length,
+                className: 'rbc-agenda-date-cell',
+              },
+              AgendaDate
+                ? React.createElement(AgendaDate, {
+                    day: day,
+                    label: dateLabel,
+                  })
+                : dateLabel
+            )
+          : false
+      return React.createElement(
+        'tr',
+        {
+          key: dayKey + '_' + idx,
+          className: userProps.className,
+          style: userProps.style,
+        },
+        first,
+        React.createElement(
+          'td',
+          {
+            className: 'rbc-agenda-time-cell',
+          },
+          timeRangeLabel(day, event)
+        ),
+        React.createElement(
+          'td',
+          {
+            className: 'rbc-agenda-event-cell',
+          },
+          Event
+            ? React.createElement(Event, {
+                event: event,
+                title: title,
+              })
+            : title
+        )
+      )
+    }, [])
+  }
+
+  var timeRangeLabel = function timeRangeLabel(day, event) {
+    var labelClass = '',
+      TimeComponent = components.time,
+      label = localizer.messages.allDay
+    var end = accessors.end(event)
+    var start = accessors.start(event)
+
+    if (!accessors.allDay(event)) {
+      if (eq(start, end)) {
+        label = localizer.format(start, 'agendaTimeFormat')
+      } else if (eq(start, end, 'day')) {
+        label = localizer.format(
+          {
+            start: start,
+            end: end,
+          },
+          'agendaTimeRangeFormat'
+        )
+      } else if (eq(day, start, 'day')) {
+        label = localizer.format(start, 'agendaTimeFormat')
+      } else if (eq(day, end, 'day')) {
+        label = localizer.format(end, 'agendaTimeFormat')
+      }
+    }
+
+    if (gt(day, start, 'day')) labelClass = 'rbc-continues-prior'
+    if (lt(day, end, 'day')) labelClass += ' rbc-continues-after'
+    return React.createElement(
+      'span',
+      {
+        className: labelClass.trim(),
+      },
+      TimeComponent
+        ? React.createElement(TimeComponent, {
+            event: event,
+            day: day,
+            label: label,
+          })
+        : label
+    )
+  }
+
+  var _adjustHeader = function _adjustHeader() {
+    if (!tbodyRef.current) return
+    var header = headerRef.current
+    var firstRow = tbodyRef.current.firstChild
+    if (!firstRow) return
+    var isOverflowing =
+      contentRef.current.scrollHeight > contentRef.current.clientHeight
+    var _widths = []
+    var widths = _widths
+    _widths = [getWidth(firstRow.children[0]), getWidth(firstRow.children[1])]
+
+    if (widths[0] !== _widths[0] || widths[1] !== _widths[1]) {
+      dateColRef.current.style.width = _widths[0] + 'px'
+      timeColRef.current.style.width = _widths[1] + 'px'
+    }
+
+    if (isOverflowing) {
+      addClass(header, 'rbc-header-overflowing')
+      header.style.marginRight = scrollbarSize() + 'px'
+    } else {
+      removeClass(header, 'rbc-header-overflowing')
+    }
+  }
+
+  var messages = localizer.messages
+  var end = add(date, length, 'day')
+  var range$1 = range(date, end, 'day')
+  events = events.filter(function(event) {
+    return inRange(event, date, end, accessors)
+  })
+  events.sort(function(a, b) {
+    return +accessors.start(a) - +accessors.start(b)
+  })
+  return React.createElement(
+    'div',
+    {
+      className: 'rbc-agenda-view',
+    },
+    events.length !== 0
+      ? React.createElement(
+          React.Fragment,
+          null,
+          React.createElement(
+            'table',
+            {
+              ref: headerRef,
+              className: 'rbc-agenda-table',
+            },
+            React.createElement(
+              'thead',
               null,
               React.createElement(
-                'table',
-                {
-                  ref: this.headerRef,
-                  className: 'rbc-agenda-table',
-                },
+                'tr',
+                null,
                 React.createElement(
-                  'thead',
-                  null,
-                  React.createElement(
-                    'tr',
-                    null,
-                    React.createElement(
-                      'th',
-                      {
-                        className: 'rbc-header',
-                        ref: this.dateColRef,
-                      },
-                      messages.date
-                    ),
-                    React.createElement(
-                      'th',
-                      {
-                        className: 'rbc-header',
-                        ref: this.timeColRef,
-                      },
-                      messages.time
-                    ),
-                    React.createElement(
-                      'th',
-                      {
-                        className: 'rbc-header',
-                      },
-                      messages.event
-                    )
-                  )
-                )
-              ),
-              React.createElement(
-                'div',
-                {
-                  className: 'rbc-agenda-content',
-                  ref: this.contentRef,
-                },
-                React.createElement(
-                  'table',
+                  'th',
                   {
-                    className: 'rbc-agenda-table',
+                    className: 'rbc-header',
+                    ref: dateColRef,
                   },
-                  React.createElement(
-                    'tbody',
-                    {
-                      ref: this.tbodyRef,
-                    },
-                    range$1.map(function(day, idx) {
-                      return _this2.renderDay(day, events, idx)
-                    })
-                  )
+                  messages.date
+                ),
+                React.createElement(
+                  'th',
+                  {
+                    className: 'rbc-header',
+                    ref: timeColRef,
+                  },
+                  messages.time
+                ),
+                React.createElement(
+                  'th',
+                  {
+                    className: 'rbc-header',
+                  },
+                  messages.event
                 )
               )
             )
-          : React.createElement(
-              'span',
+          ),
+          React.createElement(
+            'div',
+            {
+              className: 'rbc-agenda-content',
+              ref: contentRef,
+            },
+            React.createElement(
+              'table',
               {
-                className: 'rbc-agenda-empty',
+                className: 'rbc-agenda-table',
               },
-              messages.noEventsInRange
+              React.createElement(
+                'tbody',
+                {
+                  ref: tbodyRef,
+                },
+                range$1.map(function(day, idx) {
+                  return renderDay(day, events, idx)
+                })
+              )
             )
-      )
-    }
-
-    return Agenda
-  })(React.Component)
+          )
+        )
+      : React.createElement(
+          'span',
+          {
+            className: 'rbc-agenda-empty',
+          },
+          messages.noEventsInRange
+        )
+  )
+}
 
 Agenda.propTypes =
   process.env.NODE_ENV !== 'production'
@@ -5183,9 +5237,9 @@ Agenda.defaultProps = {
   length: 30,
 }
 
-Agenda.range = function(start, _ref) {
-  var _ref$length = _ref.length,
-    length = _ref$length === void 0 ? Agenda.defaultProps.length : _ref$length
+Agenda.range = function(start, _ref2) {
+  var _ref2$length = _ref2.length,
+    length = _ref2$length === void 0 ? Agenda.defaultProps.length : _ref2$length
   var end = add(start, length, 'day')
   return {
     start: start,
@@ -5193,9 +5247,9 @@ Agenda.range = function(start, _ref) {
   }
 }
 
-Agenda.navigate = function(date, action, _ref2) {
-  var _ref2$length = _ref2.length,
-    length = _ref2$length === void 0 ? Agenda.defaultProps.length : _ref2$length
+Agenda.navigate = function(date, action, _ref3) {
+  var _ref3$length = _ref3.length,
+    length = _ref3$length === void 0 ? Agenda.defaultProps.length : _ref3$length
 
   switch (action) {
     case navigate.PREVIOUS:
@@ -5209,11 +5263,11 @@ Agenda.navigate = function(date, action, _ref2) {
   }
 }
 
-Agenda.title = function(start, _ref3) {
-  var _ref3$length = _ref3.length,
+Agenda.title = function(start, _ref4) {
+  var _ref4$length = _ref4.length,
     length =
-      _ref3$length === void 0 ? Agenda.defaultProps.length : _ref3$length,
-    localizer = _ref3.localizer
+      _ref4$length === void 0 ? Agenda.defaultProps.length : _ref4$length,
+    localizer = _ref4.localizer
   var end = add(start, length, 'day')
   return localizer.format(
     {
@@ -5593,6 +5647,18 @@ var Calendar =
         notify(_this.props.onDoubleClickEvent, args)
       }
 
+      _this.handleKeyPressEvent = function() {
+        for (
+          var _len4 = arguments.length, args = new Array(_len4), _key4 = 0;
+          _key4 < _len4;
+          _key4++
+        ) {
+          args[_key4] = arguments[_key4]
+        }
+
+        notify(_this.props.onKeyPressEvent, args)
+      }
+
       _this.handleSelectSlot = function(slotInfo) {
         notify(_this.props.onSelectSlot, slotInfo)
       }
@@ -5618,7 +5684,7 @@ var Calendar =
 
     var _proto = Calendar.prototype
 
-    _proto.componentWillReceiveProps = function componentWillReceiveProps(
+    _proto.UNSAFE_componentWillReceiveProps = function UNSAFE_componentWillReceiveProps(
       nextProps
     ) {
       this.setState({
@@ -5638,6 +5704,7 @@ var Calendar =
         eventPropGetter = _ref2.eventPropGetter,
         backgroundEventPropGetter = _ref2.backgroundEventPropGetter,
         slotPropGetter = _ref2.slotPropGetter,
+        slotGroupPropGetter = _ref2.slotGroupPropGetter,
         dayPropGetter = _ref2.dayPropGetter,
         view = _ref2.view,
         views = _ref2.views,
@@ -5671,6 +5738,13 @@ var Calendar =
           slotProp: function slotProp() {
             return (
               (slotPropGetter && slotPropGetter.apply(void 0, arguments)) || {}
+            )
+          },
+          slotGroupProp: function slotGroupProp() {
+            return (
+              (slotGroupPropGetter &&
+                slotGroupPropGetter.apply(void 0, arguments)) ||
+              {}
             )
           },
           dayProp: function dayProp() {
@@ -5786,6 +5860,7 @@ var Calendar =
             onDrillDown: this.handleDrillDown,
             onSelectEvent: this.handleSelectEvent,
             onDoubleClickEvent: this.handleDoubleClickEvent,
+            onKeyPressEvent: this.handleKeyPressEvent,
             onSelectSlot: this.handleSelectSlot,
             onShowMore: onShowMore,
           })
@@ -6049,7 +6124,7 @@ Calendar.propTypes =
         /**
          *
          * ```js
-         * (dates: Date[] | { start: Date; end: Date }, view?: 'month'|'week'|'work_week'|'day'|'agenda') => void
+         * (dates: Date[] | { start: Date; end: Date }, view: 'month'|'week'|'work_week'|'day'|'agenda'|undefined) => void
          * ```
          *
          * Callback fired when the visible date range changes. Returns an Array of dates
@@ -6110,6 +6185,15 @@ Calendar.propTypes =
          * ```
          */
         onDoubleClickEvent: PropTypes.func,
+
+        /**
+         * Callback fired when a focused calendar event recieves a key press.
+         *
+         * ```js
+         * (event: Object, e: SyntheticEvent) => void
+         * ```
+         */
+        onKeyPressEvent: PropTypes.func,
 
         /**
          * Callback fired when dragging a selection in the Time views.
@@ -6256,7 +6340,7 @@ Calendar.propTypes =
         longPressThreshold: PropTypes.number,
 
         /**
-         * Determines the selectable time increments in week and day views
+         * Determines the selectable time increments in week and day views, in minutes.
          */
         step: PropTypes.number,
 
@@ -6288,7 +6372,7 @@ Calendar.propTypes =
 
         /**
          * Optionally provide a function that returns an object of className or style props
-         * to be applied to the the time-slot node. Caution! Styles that change layout or
+         * to be applied to the time-slot node. Caution! Styles that change layout or
          * position may break the calendar in unexpected ways.
          *
          * ```js
@@ -6296,6 +6380,15 @@ Calendar.propTypes =
          * ```
          */
         slotPropGetter: PropTypes.func,
+
+        /**
+         * Optionally provide a function that returns an object of props to be applied
+         * to the time-slot group node. Useful to dynamically change the sizing of time nodes.
+         * ```js
+         * () => { style?: Object }
+         * ```
+         */
+        slotGroupPropGetter: PropTypes.func,
 
         /**
          * Optionally provide a function that returns an object of className or style props
@@ -6893,7 +6986,7 @@ var weekRangeFormat$3 = function weekRangeFormat(_ref5, culture, local) {
 
 var formats$3 = {
   dateFormat: 'dd',
-  dayFormat: 'dd ddd',
+  dayFormat: 'dd eee',
   weekdayFormat: 'cccc',
   selectRangeFormat: timeRangeFormat$3,
   eventTimeRangeFormat: timeRangeFormat$3,
@@ -6901,10 +6994,10 @@ var formats$3 = {
   eventTimeRangeEndFormat: timeRangeEndFormat$3,
   timeGutterFormat: 'p',
   monthHeaderFormat: 'MMMM yyyy',
-  dayHeaderFormat: 'dddd MMM dd',
+  dayHeaderFormat: 'cccc MMM dd',
   dayRangeHeaderFormat: weekRangeFormat$3,
   agendaHeaderFormat: dateRangeFormat$4,
-  agendaDateFormat: 'ddd MMM dd',
+  agendaDateFormat: 'ccc MMM dd',
   agendaTimeFormat: 'p',
   agendaTimeRangeFormat: timeRangeFormat$3,
 }
