@@ -139,7 +139,7 @@
     "fstream": "^1.0.12",
     "lodash.mergewith": "^4.6.2",
     "lodash.template": "^4.5.0",
-    "tar": "^2.2.2",
+    "tar": "^6.1.0",
     "markdown-to-jsx": "^6.11.4",
     "marked": "^0.7.0",
     "webpack-dev-server": "^3.1.11"
