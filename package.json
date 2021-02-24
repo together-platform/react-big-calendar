@@ -88,7 +88,7 @@
     "bootstrap": "^4.1.2",
     "bootstrap-sass": "^3.4.1",
     "component-metadata-loader": "^4.0.0",
-    "cpy-cli": "^2.0.0",
+    "cpy-cli": "^3.1.1",
     "eslint": "^5.8.0",
     "eslint-config-jason": "^4.1.0",
     "eslint-config-prettier": "^3.1.0",
